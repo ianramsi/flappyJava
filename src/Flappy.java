@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class FlappyBird extends JPanel implements ActionListener, KeyListener {
+public class Flappy extends JPanel implements ActionListener, KeyListener {
     int boardWidth = 360;
     int boardHeight = 640;
 
@@ -17,7 +17,7 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
     //bird Class
     int birdX = boardWidth/8;
     int birdY = boardHeight/2;
-    int birdWidth = 4=34;
+    int birdWidth = 4;
     int birdHeight = 24;
     
     class Bird {
@@ -65,7 +65,7 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
     boolean gameOver = false;
     double score = 0;
 
-    FlappyBird(){
+    Flappy(){
         setPreferredSize(new Dimension(boardWidth, boardHeight));
 
         setFocusable(true);
@@ -98,5 +98,114 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
 
     void placePipes() {
 
+        int randomPipeY = (int)(pipeY - pipeHeight/4 - Math.random()*(pipeHeight/2));
+        int openingSpace = boardHeight/4;
+        Pipe topPipe = new Pipe(topPipeImg);
+        topPipe.y = randomPipeY;
+        pipes.add(topPipe);
+
+        Pipe bottomPipe = new Pipe(bottomPipeImg);
+        bottomPipe.y = topPipe.y + pipeHeight + openingSpace;
+        pipes.add(bottomPipe);
+
     }
+
+    public void paintComponents(Graphics g) {
+        super.paintComponents(g);
+        draw(g);
+    }
+
+    public void draw(Graphics g) {
+        //draw background
+        g.drawImage(backgroundImg, 0, 0, this.boardWidth, this.boardHeight, null);
+    
+        //draw bird
+        g.drawImage(bird.img, bird.x, bird.y, bird.width, bird.height, null);
+
+        //draw pipes
+        for (int i = 0; i < pipes.size(); i++) {
+            Pipe pipe = pipes.get(i);
+            g.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height, null);
+        }
+
+        //draw score
+        g.setColor(Color.white);
+
+        g.setFont(new Font("Arial", Font.PLAIN, 32));
+        if (gameOver) {
+            g.drawString("Game Over: " + String.valueOf((int) score), 10, 35);
+        }
+        else {
+            g.drawString(String.valueOf((int) score), 10, 35);
+        }
+    }
+    
+    public void move () {
+        velocityY += gravity;
+        bird.y += velocityY;
+
+        bird.y = Math.max(bird.y, 0); //apply gravity to the bird
+
+        //pipes
+        for (int i = 0; i < pipes.size(); i++) {
+            Pipe pipe = pipes.get(i);
+            pipe.x += velocityX;
+
+            if(!pipe.passed && bird.x > pipe.x + pipe.width) {
+                score = score + 0.5;
+                pipe.passed = true; //bird passed the pipe
+
+            }
+            
+            if (collision(bird, pipe)){
+                gameOver = true;
+            }            
+        }
+        if(bird.y > boardHeight) {
+            gameOver = true;
+        }
+    }
+
+    boolean collision(Bird bird, Pipe pipe) {
+        return bird.x < pipe.x + pipe.width &&
+               bird.x + bird.width > pipe.x &&
+               bird.y < pipe.y + pipe.height &&
+               bird.y + bird.height > pipe.y;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) { //called every x milliseconds by gameLoop timer
+        move();
+        repaint();
+        if (gameOver) {
+            placePipeTimer.stop();
+            gameLoop.stop();
+        }
+    }
+
+    @Override
+    public void keyPressed(KeyEvent key) {
+        if (key.getKeyCode() == KeyEvent.VK_SPACE) {
+            System.out.println("JUMP!!!!");
+            velocityY = -9;
+
+            if (gameOver) {
+                //restart the game
+                bird.y = birdY;
+                velocityY = 0;
+                pipes.clear();
+                score = 0;
+                gameLoop.start();
+                placePipeTimer.start();
+            }
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent key) {}
+
+    @Override
+    public void keyTyped(KeyEvent key) {}
 }
+
+
