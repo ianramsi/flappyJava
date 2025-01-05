@@ -13,6 +13,11 @@ public static void main (String []args) throws Exception {
     frame.setResizable(false);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+    Flappy flappy = new Flappy();
+    frame.add(flappy);
+    frame.pack();
+    flappy.requestFocus();
+
     frame.setVisible(true);
     }
 }
